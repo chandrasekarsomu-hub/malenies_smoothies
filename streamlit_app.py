@@ -43,9 +43,15 @@ if ingredients_list:
 # API call to SmoothieFroot
 smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
 
-# Display response in dataframe if valid JSON
+# Debug: show status and response content
+st.write("Status code:", smoothiefroot_response.status_code)
+st.text("Response preview:")
+st.text(smoothiefroot_response.text[:500])  # Limit output to 500 chars
+
 try:
-    sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+    # Attempt to parse JSON
+    data = smoothiefroot_response.json()
+    st.dataframe(data=data, use_container_width=True)
 except requests.exceptions.JSONDecodeError:
-    st.error("Could not parse API response as JSON.")
-    st.text(smoothiefroot_response.text)
+    st.error("Could not parse API response as JSON. See response preview above.")
+
