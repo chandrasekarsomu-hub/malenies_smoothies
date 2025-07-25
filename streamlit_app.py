@@ -28,11 +28,13 @@ ingredients_list = st.multiselect(
     max_selections=5
 )
 
+# Build ingredients string and show nutrition info
 ingredients_string = ""
 
 if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + " "
+
         search_on = pd_df.loc[
             pd_df["FRUIT_NAME"] == fruit_chosen, "SEARCH_ON"
         ].iloc[0]
@@ -46,12 +48,26 @@ if ingredients_list:
         else:
             st.error(f"Failed to fetch data for {fruit_chosen}")
 
-# Insert order if name and ingredients are provided
+# Submit order if data is valid
 if ingredients_string.strip() and name_on_order:
-    order_data = [(ingredients_string.strip(), name_on_order)]
-    order_df = session.create_dataframe(order_data, schema=["INGREDIENTS", "NAME_ON_ORDER"])
-    order_df.write.mode("append").save_as_table("smoothies.public.orders")
+    try:
+        order_data = [(name_on_order, ingredients_string.strip())]
 
-    st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
+        order_df = session.create_dataframe(
+            order_data,
+            schema=["NAME_ON_ORDER", "INGREDIENTS"]
+        )
+
+        # Debug info (optional)
+        # st.write("Order DataFrame preview:")
+        # order_df.show()
+
+        # Safely insert into existing table
+        order_df.write.insert_into("smoothies.public.orders")
+
+        st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
+
+    except Exception as e:
+        st.error(f"Error inserting order: {e}")
 else:
     st.warning("Please enter a name and select at least one ingredient.")
