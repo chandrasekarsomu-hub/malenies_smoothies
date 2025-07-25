@@ -58,12 +58,11 @@ if ingredients_string.strip() and name_on_order:
             schema=["NAME_ON_ORDER", "INGREDIENTS"]
         )
 
-        # Debug info (optional)
-        # st.write("Order DataFrame preview:")
-        # order_df.show()
-
-        # Safely insert into existing table
-        order_df.write.insert_into("smoothies.public.orders")
+        # Insert into specific columns of the table
+        order_df.write.insert_into(
+            table_name="smoothies.public.orders",
+            table_column_names=["NAME_ON_ORDER", "INGREDIENTS"]
+        )
 
         st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
 
