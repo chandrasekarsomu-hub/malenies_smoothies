@@ -28,9 +28,9 @@ ingredients_list = st.multiselect(
     max_selections=5
 )
 
-if ingredients_list:
-    ingredients_string = ""
+ingredients_string = ""
 
+if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + " "
         search_on = pd_df.loc[
@@ -46,14 +46,12 @@ if ingredients_list:
         else:
             st.error(f"Failed to fetch data for {fruit_chosen}")
 
-    # Create SQL insert statement
-    my_insert_stmt = f"""
-        INSERT INTO smoothies.public.orders (ingredients, name_on_order)
-        VALUES ('{ingredients_string.strip()}', '{name_on_order}')
-    """
+# Insert order if name and ingredients are provided
+if ingredients_string.strip() and name_on_order:
+    order_data = [(ingredients_string.strip(), name_on_order)]
+    order_df = session.create_dataframe(order_data, schema=["INGREDIENTS", "NAME_ON_ORDER"])
+    order_df.write.mode("append").save_as_table("smoothies.public.orders")
 
-    # Submit button
-    time_to_insert = st.button("Submit Order")
-    if time_to_insert:
-        session.sql(my_insert_stmt).collect()
-        st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
+    st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
+else:
+    st.warning("Please enter a name and select at least one ingredient.")
