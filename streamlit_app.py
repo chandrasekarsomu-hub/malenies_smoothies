@@ -41,7 +41,7 @@ if ingredients_list:
         st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
 
 # API call to SmoothieFroot
-smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/watermelon")
+smoothiefroot_response = requests.get("https://fruityvice.com/api/fruit/watermelon")
 
 # Debug: show status and response content
 st.write("Status code:", smoothiefroot_response.status_code)
