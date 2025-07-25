@@ -16,40 +16,30 @@ cnx = st.connection("snowflake")
 session = cnx.session()
 
 # Get list of available fruits
-my_dataframe = session.table("smoothies.public.fruit_options").select(col("FRUIT_NAME"))
+my_dataframe = session.table("smoothies.public.fruit_options").select(
+    col("FRUIT_NAME"), col("SEARCH_ON")
+)
+pd_df = my_dataframe.to_pandas()
 
 # Multiselect for ingredients
 ingredients_list = st.multiselect(
-    "Choose up to 5 ingredients:", my_dataframe, max_selections=5
+    "Choose up to 5 ingredients:", pd_df["FRUIT_NAME"].tolist(), max_selections=5
 )
 
-# Handle order submission
 if ingredients_list:
-    # Combine selected ingredients into a string
-    ingredients_string = " ".join(ingredients_list)
-    st.write("Selected ingredients:", ingredients_string)
-
-    # Create SQL insert statement
-    my_insert_stmt = f"""
-        INSERT INTO smoothies.public.orders (ingredients, name_on_order)
-        VALUES ('{ingredients_string}', '{name_on_order}')
-    """
-
-    # Submit button
-    time_to_insert = st.button("Submit Order")
-    if time_to_insert:
-        session.sql(my_insert_stmt).collect()
-        st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
-
-    # Display nutrition info for each selected fruit
+    ingredients_string = ''
+    
     for fruit_chosen in ingredients_list:
+        ingredients_string += fruit_chosen + ' '
+        search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
+        
+        st.write(f'The search value for {fruit_chosen} is {search_on}.')
         st.subheader(f"{fruit_chosen} Nutrition Information")
-        try:
-            response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_chosen}")
-            response.raise_for_status()  # Raise an error for bad status
-            data = response.json()
-            st.dataframe(data=data, use_container_width=True)
-        except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching data for {fruit_chosen}: {e}")
-        except ValueError:
-            st.error("Could not parse API response as JSON.")
+        
+        response = requests.get(f"https://fruityvice.com/api/fruit/{fruit_chosen}")
+        
+        if response.status_code == 200:
+            fruityvice_data = response.json()
+            st.json(fruityvice_data)
+        else:
+            st.error(f"Could not retrieve data for {fruit_chosen}.")
